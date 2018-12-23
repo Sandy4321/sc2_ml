@@ -106,7 +106,7 @@ class TrainingOrders():
         return tos
 
     def train_orders(self, max_steps=15000, winners=True):
-        tos = self.select_to()
+        tos = self.select_to(winners)
         mat = np.zeros((len(tos), len(self.training_list), max_steps))
         for i,t in enumerate(tos):
             for row in t:

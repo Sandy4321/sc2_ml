@@ -143,3 +143,11 @@ class Parse():
         else:
             p2 = None
         return p1, p2
+
+    def extract(self, player, eventtype):
+        if eventtype == 'units':
+            return self.extract_training(player)
+        elif eventtype == 'training':
+            return self.extract_building(player)
+        else:
+            raise ValueError('Not a valid option: %s' % eventtype)
