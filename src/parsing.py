@@ -23,7 +23,7 @@ class Parse():
         return list(set([x.split('\t')[1] for x in data]))
 
     def extract_data(self, datasetfile):
-        with open(datasetfile, 'r') as file:
+        with open(datasetfile, 'r', encoding='latin-1') as file:
             return file.readlines()[2:]
 
     def split_players(self, data):
@@ -147,7 +147,7 @@ class Parse():
     def extract(self, player, eventtype):
         if eventtype == 'units':
             return self.extract_training(player)
-        elif eventtype == 'training':
+        elif eventtype == 'buildings':
             return self.extract_building(player)
         else:
             raise ValueError('Not a valid option: %s' % eventtype)
