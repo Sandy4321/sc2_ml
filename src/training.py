@@ -19,6 +19,25 @@ terran_units = [
     'Battlecruiser'
 ]
 
+terran_fighting_units = [
+    'Marine',
+    'Marauder',
+    'Reaper',
+    'Ghost',
+    'Hellion',
+    'Hellbat',
+    'SiegeTank',
+    'Cyclone',
+    'WidowMine',
+    'Thor',
+    'Viking',
+    'Medivac',
+    'Liberator',
+    'Raven',
+    'Banshee',
+    'Battlecruiser'
+]
+
 zerg_units = [
     'Larva',
     'Drone',
@@ -38,17 +57,56 @@ zerg_units = [
     'InfestedTerran',
     'NydusWorm',
     'Overlord',
-    'Lair',
     'Overseer',
     'Mutalisk',
     'Corruptor',
-    'Hive',
+    'BroodLord',
+    'Viper'
+]
+
+zerg_fighting_units = [
+    'Queen',
+    'Zergling',
+    'Baneling',
+    'Roach',
+    'Ravager',
+    'Hydralisk',
+    'Lurker',
+    'Infestor',
+    'SwarmHost',
+    'Ultralisk',
+    'Locust',
+    'Broodling',
+    'Mutalisk',
+    'Corruptor',
     'BroodLord',
     'Viper'
 ]
 
 protoss_units = [
     'Probe',
+    'Zealot',
+    'Stalker',
+    'Sentry',
+    'Adept',
+    'HighTemplar',
+    'DarkTemplar',
+    'Immortal',
+    'Colossus',
+    'Disruptor',
+    'Archon',
+    'Observer',
+    'WarpPrism',
+    'Phoenix',
+    'VoidRay',
+    'Oracle',
+    'Carrier',
+    'Tempest',
+    'MothershipCore',
+    'Mothership'
+]
+
+protoss_fighting_units = [
     'Zealot',
     'Stalker',
     'Sentry',

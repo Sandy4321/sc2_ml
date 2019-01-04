@@ -1,13 +1,17 @@
 from building import terran_buildings, protoss_buildings, zerg_buildings
+from training import terran_fighting_units, protoss_fighting_units, zerg_fighting_units
 from training import terran_units, protoss_units, zerg_units
 from parsing import Parse
 import numpy as np
 import pandas as pd
-from collections import deque
+from collections import deque, Counter
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 from operator import itemgetter
+from spawningtool import parser
+from glob import glob
 
+units = protoss_fighting_units+zerg_fighting_units+terran_fighting_units
 FRAMES_PER_SEC = int(1000/11.278)
 
 class Orders():
@@ -104,3 +108,123 @@ class Orders():
         ol = np.array(order_list)[np.where(db.labels_ == best_cluster)].tolist()
         df = self.orders(ol, max_frames=max_frames)
         return df
+
+class UnitOrders():
+    """
+    Extract produced units from `.sc2replay` files.
+    """
+    def __init__(self, datasetfiles):
+        self.files = datasetfiles
+        self.df = pd.DataFrame()
+
+    def parse(self, best_counters=False):
+        """
+        Use the spawningtool parser for `.sc2replay` file.
+        :param file:
+        :return: replay
+        """
+        prod = []
+        max_prod = []
+        counter = []
+        n_counter = []
+        for file in self.files:
+            try:
+                replay = parser.parse_replay(file)
+                if best_counters:
+                    p, mp, c, nc = self.most_produced_counter(replay)
+                    prod.append(p)
+                    max_prod.append(mp)
+                    counter.append(c)
+                    n_counter.append(nc)
+                else:
+                    df1 = self.extract_units(replay, 1)
+                    df2 = self.extract_units(replay, 2)
+                    self.df = pd.concat([self.df, df1, df2], sort=True)
+            except:
+                pass
+        if best_counters:
+            self.df = pd.DataFrame({'most_produced':prod, 'n_produced': max_prod, 'best_counter': counter, 'counter_prod': n_counter})
+        else:
+            self.df.reset_index(inplace=True, drop=True)
+        return self.df
+
+    def bo(self, replay, player):
+        """
+        Extract the number of produced units.
+        :param replay: parsed replay file
+        :param player: int
+        :return: Counter dict
+        """
+        return Counter([x['name'] for x in replay['players'][player]['buildOrder'] if x['name'] in units])
+
+    def loss(self, replay, player):
+        """
+        Extract the number of killed units.
+        :param replay: parsed replay file
+        :param player: int
+        :return: Counter dict
+        """
+        return Counter([x['name'] for x in replay['players'][player]['unitsLost'] if x['name'] in units])
+
+    def survival(self, produced, loss):
+        """
+        Compute the ratio of surviving units
+        :param produced: dict of produced units
+        :param loss: dict of lost units
+        :return: dict of survival ratios
+        """
+        survival = {}
+        for k, v in produced.items():
+            if k in loss:
+                survival[k] = (v - loss[k]) / v
+            else:
+                survival[k] = 1.0
+        return survival
+
+    def to_df(self, d, prefix):
+        """
+        Convert dict into dataframe with `prefix`ed column names
+        :param d: dict
+        :param prefix: str
+        :return: pandas df
+        """
+        return pd.DataFrame.from_dict(d, orient='index').T.add_prefix(prefix)
+
+    def extract_units(self, replay, player):
+        """
+        Extract unit statistics as dataframe.
+        :param replay: parsed replay file
+        :param player: int
+        :return: pandas df
+        """
+        l = [2, 1, 2, 1]
+        opponent = l[player + 1]
+        player_produced = self.bo(replay, player)
+        player_loss = self.loss(replay, player)
+        player_survival = self.survival(player_produced, player_loss)
+        opponent_produced = self.bo(replay, opponent)
+        opponent_loss = self.loss(replay, opponent)
+        opponent_survival = self.survival(opponent_produced, opponent_loss)
+        win = pd.DataFrame([replay['players'][player]['is_winner']], columns=['is_winner'])
+        d1 = self.to_df(player_produced, 'prod_')
+        d2 = self.to_df(player_loss, 'loss_')
+        d3 = self.to_df(player_survival, 'surv_')
+        d4 = self.to_df(opponent_produced, 'oppo_prod_')
+        d5 = self.to_df(opponent_loss, 'oppo_loss_')
+        d6 = self.to_df(opponent_survival, 'oppo_surv_')
+        return pd.concat([d1, d2, d3, d4, d5, d6, win], axis=1)
+
+    def most_produced_counter(self, replay):
+        player = [x for x in [1,2] if not replay['players'][x]['is_winner']][0]
+        opponent = [x for x in [1,2] if replay['players'][x]['is_winner']][0]
+
+        player_produced = self.bo(replay, player)
+        max_prod = player_produced.most_common(1)[0]
+
+        opponent_produced = self.bo(replay, opponent)
+        opponent_loss = self.loss(replay, opponent)
+        opponent_survival = self.survival(opponent_produced, opponent_loss)
+        counter = Counter(opponent_survival).most_common(1)[0][0]
+        prod_counter = opponent_produced[counter]
+
+        return max_prod[0], max_prod[1], counter, prod_counter

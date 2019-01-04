@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 
+
 class Parse():
     def __init__(self, datasetfile):
         self.data = self.extract_data(datasetfile)
@@ -151,3 +152,4 @@ class Parse():
             return self.extract_building(player)
         else:
             raise ValueError('Not a valid option: %s' % eventtype)
+
